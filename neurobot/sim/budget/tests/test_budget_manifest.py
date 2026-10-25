@@ -1,7 +1,11 @@
 """Манифест прогона: шаги, хеши кода, отклонения."""
 import json
+import os
 
 from neurobot.sim.budget import manifest as MF
+
+# патч к ros_mcp_server лаборатории в репозиторий не входит (.gitignore): хешируется, только если лежит на месте
+MCP_PATCH = "neurobot/deploy/mcp/ros_mcp_server.patch"
 
 
 def test_manifest_lists_steps_hashes_and_deviations(tmp_path):
@@ -15,7 +19,8 @@ def test_manifest_lists_steps_hashes_and_deviations(tmp_path):
                            "ratio": None, "domain": None, "proxy_domain": None, "slice_props": ["MemoryMax=3336M"],
                            "ready_s": None, "twin_run": None}]
     code = m["code_sha256"]
-    assert "neurobot/sim/budget/stack.py" in code and "neurobot/deploy/mcp/ros_mcp_server.patch" in code
+    assert "neurobot/sim/budget/stack.py" in code and "neurobot/deploy/mcp/ros_mcp.json.example" in code
+    assert (MCP_PATCH in code) == os.path.isfile(os.path.join(MF.PROJ, MCP_PATCH))
     assert all(len(v) == 64 for v in code.values())
     assert m["tools_sha256"] == {} and len(m["deviations"]) >= 8
 

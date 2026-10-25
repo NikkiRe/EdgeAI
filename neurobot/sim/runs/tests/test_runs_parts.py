@@ -222,6 +222,7 @@ class OperatorTest(unittest.TestCase):
 
 
 class ConfigTest(unittest.TestCase):
+    @unittest.skipUnless(LAB_CFG.is_file(), "нет конфига PicoClaw лаборатории (third_party — не в репозитории)")
     def test_lab_picoclaw_changes_only_llm_vk_paths_and_keeps_their_defaults(self):
         lab = json.loads(LAB_CFG.read_text(encoding="utf-8"))
         cfg = stacks.lab_picoclaw(lab, home="/h", api_base="http://m/v1", proxy_python="/py", proxy="/p.py")

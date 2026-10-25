@@ -10,7 +10,8 @@ robot_vision_mcp_proxy: без патча — дубли инструменто�
 воркеру как секунды), doctor видит это по tools/list; с патчем — дублей нет, длительность и скорость ограничены,
 HTTP на 127.0.0.1, стоп воркеру при SIGTERM; против подставного воркера 8766.
 Серверы лаборатории запускаются копией во временном каталоге. Нужны Python ≥ 3.10, mcp, websocket-client,
-websockets; иначе тест пропускается."""
+websockets, а также исходники лаборатории (third_party/neurochip) и патчи neurobot/deploy/mcp/*.patch — они в
+репозиторий не входят (.gitignore); иначе тест пропускается."""
 from __future__ import annotations
 
 import asyncio
@@ -35,6 +36,7 @@ LAB = ROOT / "third_party/neurochip/ros_mcp_server/ros_mcp_server-master/ros_mcp
 PATCH = DEPLOY / "mcp/ros_mcp_server.patch"
 LAB_PROXY = ROOT / "third_party/neurochip/robotic_platform/robotic_platform/robot_vision_mcp_proxy.py"
 PROXY_PATCH = DEPLOY / "mcp/robot_vision_mcp_proxy.patch"
+NO_LAB = "нет {} — материалы лаборатории в репозиторий не входят (.gitignore)"
 if str(DEPLOY) not in sys.path:
     sys.path.insert(0, str(DEPLOY))
 
@@ -151,6 +153,7 @@ def is_zero(t: dict) -> bool:
 
 
 @unittest.skipUnless(DEPS, "нужны Python ≥ 3.10, mcp, websocket-client, websockets")
+@unittest.skipUnless(LAB.is_file() and PATCH.is_file(), NO_LAB.format("ros_mcp_server.py лаборатории или патча к нему"))
 class PatchTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -388,6 +391,7 @@ class FakeWorker:
 
 
 @unittest.skipUnless(DEPS, "нужны Python ≥ 3.10, mcp, websocket-client, websockets")
+@unittest.skipUnless(LAB_PROXY.is_file(), NO_LAB.format("robot_vision_mcp_proxy.py лаборатории"))
 class ProxyPatchTest(unittest.TestCase):
     def start(self, patched: bool):
         tmp = tempfile.mkdtemp()
@@ -443,6 +447,7 @@ class ProxyPatchTest(unittest.TestCase):
         self.assertEqual((f.level, f.code), (doctor.FAIL, "mcp_schema"))
         self.assertIn("Tool already exists", self._kill()[1].decode(errors="replace"))
 
+    @unittest.skipUnless(PROXY_PATCH.is_file(), NO_LAB.format("патча к robot_vision_mcp_proxy.py"))
     def test_patched_proxy(self):
         lines = PROXY_PATCH.read_text(encoding="utf-8").splitlines()
         self.assertLessEqual(len([ln for ln in lines if ln.startswith("+") and not ln.startswith("+++")]), 20)

@@ -47,7 +47,11 @@ from .pushfilter import MODES as PUSH_MODES
 from .pushfilter import PushFilter, format_event
 
 ROOT = Path(__file__).resolve().parents[2]
+# Python для mock-llm и sim-mcp: .venv стенда (README), а без него (чистый клон, своё окружение) — текущий
+# интерпретатор, в котором уже импортирован bench
 VENV_PY = ROOT / ".venv" / "bin" / "python"
+if not VENV_PY.exists():
+    VENV_PY = Path(sys.executable)
 USER_KINDS = ("user_cmd", "question")
 SITUATION_EPS_S = 0.001
 PORT_OFFSETS = {"mock": 0, "sim": 1, "tap": 2, "gateway": 3, "channel": 4, "api": 5, "broker": 6}
